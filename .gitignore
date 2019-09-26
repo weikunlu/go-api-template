@@ -10,3 +10,13 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+/build/
+gin-bin
+/logs/*
+
+# Mac stuff
+.DS_Store
+
+# IDE
+/.vscode
+/.idea
