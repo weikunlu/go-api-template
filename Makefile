@@ -4,6 +4,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOTOOL=$(GOCMD) tool
+GOLINT=$(GOPATH)/bin/golint
 BINARY_NAME=api
 
 # Binary parameters
@@ -18,6 +19,14 @@ LDFLAGS=-ldflags "-s -w -X main.Version=${VERSION} -X main.BuildDate=${DATE} -X 
 
 ## all: clean and run
 all: clean run
+
+## dep: download dependencies
+dep:
+	$(GOCMD) mod download
+
+## lint: golint the src files
+lint:
+	$(GOLINT) -set_exit_status ./...
 
 ## build: go build from local
 build:
