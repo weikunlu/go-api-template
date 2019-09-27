@@ -26,7 +26,7 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// Define custom request context format for logger
+// RequestContext is present a request context for logger information
 type RequestContext struct {
 	Method string                 `json:"method"`
 	Path   string                 `json:"path"`
@@ -35,15 +35,13 @@ type RequestContext struct {
 	Header map[string]interface{} `json:"headers"`
 }
 
+// ResponseContext is present a response context for logger information
 type ResponseContext struct {
-	Method string                 `json:"method"`
-	Path   string                 `json:"path"`
-	Query  string                 `json:"query"`
 	Body   string                 `json:"body"`
 	Header map[string]interface{} `json:"headers"`
 }
 
-func getRequestField(method string, path string, query string, body map[string]interface{}, headers map[string][]string) (ctx zap.Field, err error) {
+func getRequestFields(method string, path string, query string, body map[string]interface{}, headers map[string][]string) (ctx zap.Field, err error) {
 	header := make(map[string]interface{})
 	for key, h := range headers {
 		header[key] = strings.Join(h, ",")
@@ -55,39 +53,30 @@ func getRequestField(method string, path string, query string, body map[string]i
 		Body:   body,
 		Header: header,
 	}
-	byte, err := json.Marshal(requestContext)
+	b, err := json.Marshal(requestContext)
 	if err != nil {
 		return
 	}
-	raw := json.RawMessage(byte)
-	ctx = zap.Any("context", &raw)
+	raw := json.RawMessage(b)
+	ctx = zap.Any("request", &raw)
 	return
 }
 
-func getResponseField(method string, path string, query string, body string, headers map[string][]string) (ctx zap.Field, err error) {
+func getResponseFields(body string, headers map[string][]string) (ctx zap.Field, err error) {
 	header := make(map[string]interface{})
 	for key, h := range headers {
 		header[key] = strings.Join(h, ",")
 	}
-
-	maxBodyLen := len(body)
-	if maxBodyLen > 1024 {
-		maxBodyLen = 1024
-	}
-
 	requestContext := ResponseContext{
-		Method: method,
-		Path:   path,
-		Query:  query,
-		Body:   body[0:maxBodyLen],
+		Body:   body,
 		Header: header,
 	}
-	byte, err := json.Marshal(requestContext)
+	b, err := json.Marshal(requestContext)
 	if err != nil {
 		return
 	}
-	raw := json.RawMessage(byte)
-	ctx = zap.Any("context", &raw)
+	raw := json.RawMessage(b)
+	ctx = zap.Any("response", &raw)
 	return
 }
 
@@ -109,7 +98,7 @@ func AccessLogMiddleware(f func(c *gin.Context, err interface{})) gin.HandlerFun
 		if c.Request.ContentLength > 0 {
 			switch c.ContentType() {
 			case "application/json":
-				json.Unmarshal(rawBody, &reqBody)
+				_ = json.Unmarshal(rawBody, &reqBody)
 				break
 			case "application/x-www-form-urlencoded":
 				params, _ := url.ParseQuery(string(rawBody))
@@ -122,22 +111,19 @@ func AccessLogMiddleware(f func(c *gin.Context, err interface{})) gin.HandlerFun
 
 		hostField := zap.String("host_domain", c.Request.Host)
 
-		requestUuidField := zap.String("request-uuid", u1)
+		requestUUIDField := zap.String("request-uuid", u1)
 
 		// wrapper request context
-		reqContextField, err := getRequestField(c.Request.Method, c.Request.URL.RequestURI(), c.Request.URL.RawQuery, reqBody, c.Request.Header)
+		reqContextField, err := getRequestFields(c.Request.Method, c.Request.URL.RequestURI(), c.Request.URL.RawQuery, reqBody, c.Request.Header)
 		if err != nil {
-			fmt.Println(err.Error())
-			logger.Info("api_request", hostField, requestUuidField)
-		} else {
-			logger.Info("api_request", hostField, requestUuidField, reqContextField)
+			reqContextField = zap.String("request", err.Error())
 		}
 
 		// wrapper error handle
 		defer func() {
 			if err := recover(); err != nil {
 				goErr := errors.Wrap(err, 3)
-				logger.Error(goErr.Error(), hostField, requestUuidField, reqContextField)
+				logger.Error("request", log.GetErrorMessageField(goErr.Error()), hostField, requestUUIDField, reqContextField)
 
 				f(c, err)
 			}
@@ -153,13 +139,11 @@ func AccessLogMiddleware(f func(c *gin.Context, err interface{})) gin.HandlerFun
 		latencyField := zap.String("latency", fmt.Sprintf("%13v", time.Now().Sub(start)))
 
 		// wrapper response context
-		resContextField, err := getResponseField(c.Request.Method, c.Request.URL.RequestURI(), c.Request.URL.RawQuery, blw.body.String(), c.Writer.Header())
+		resContextField, err := getResponseFields(blw.body.String(), c.Writer.Header())
 		if err != nil {
-			fmt.Println(err.Error())
-			logger.Info("api_response", hostField, requestUuidField, statusCodeField, latencyField)
-		} else {
-			logger.Info("api_response", hostField, requestUuidField, resContextField, statusCodeField, latencyField)
+			resContextField = zap.String("response", err.Error())
 		}
 
+		logger.Info("request", hostField, requestUUIDField, reqContextField, resContextField, statusCodeField, latencyField)
 	}
 }
