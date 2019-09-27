@@ -10,7 +10,7 @@ func RunMigration(direction string, step string) error {
 
 	err := database.NewDatabase()
 	if err != nil {
-		fmt.Printf("get database connection error", err.Error())
+		fmt.Printf("get database connection error: %s", err.Error())
 	}
 	defer database.GetDb().Close()
 
