@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/weikunlu/go-api-template/api"
 	"github.com/weikunlu/go-api-template/api/core"
+	"github.com/weikunlu/go-api-template/api/v1"
 	"github.com/weikunlu/go-api-template/config"
 	"github.com/weikunlu/go-api-template/middlewares"
 	"net/http"
@@ -34,6 +35,10 @@ func SetupRouter() (r *gin.Engine) {
 	api := r.Group("api")
 	api.Use(middlewares.AccessLogMiddleware(recoveryHandler))
 
+	hello := api.Group("v1/hello")
+	{
+		apiv1.HelloController(hello)
+	}
 
 	return
 }
