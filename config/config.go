@@ -31,7 +31,7 @@ type BuildConfig struct {
 	Date     string
 }
 
-const projectDirName = "kkday-appphone-api"
+const projectDirName = "go-api-template"
 
 var appConfig *AppConfig
 
