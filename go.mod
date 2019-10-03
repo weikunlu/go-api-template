@@ -3,6 +3,7 @@ module github.com/weikunlu/go-api-template
 go 1.12
 
 require (
+	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
