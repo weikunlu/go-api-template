@@ -20,11 +20,8 @@ require (
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20190926180335-cea2066c6411 // indirect
-	golang.org/x/lint v0.0.0-20190909230951-414d861bb4ac // indirect
 	golang.org/x/net v0.0.0-20190926025831-c00fd9afed17 // indirect
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20190926180325-855e68c8590b // indirect
-	golang.org/x/tools v0.0.0-20190926165942-a8d5d34286bd // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/satori/go.uuid.v1 v1.2.0
 )
